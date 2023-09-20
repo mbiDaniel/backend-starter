@@ -1,20 +1,20 @@
 # Fast Api
-fastapi/sql/env
-fastapi/mongo/env
+fastapi-sql/env
+fastapi-mongo/env
 
 
 # Django
-django/sql/env
-django/mongo/env
+django-sql/env
+django-mongo/env
 
 # Express javascript
-express/js/sql/node_modules
-express/js/mongo/node_modules
+express-js-sql/node_modules
+express-js-mongo/node_modules
 
 
 # Express typescript
-express/ts/sql/node_modules
-express/ts/mongo/node_modules
+express-ts-sql/node_modules
+express-ts-mongo/node_modules
 
 # All env files
 *.env
