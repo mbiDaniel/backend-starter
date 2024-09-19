@@ -20,3 +20,5 @@ express-ts-mongo/node_modules
 *.env
 *.env*
 *.env-cmdrc.json
+
+node_modules
