@@ -4,18 +4,17 @@ import {
   UploadedFile,
   UseInterceptors,
   Get,
-  UseGuards,
   Put,
   UploadedFiles,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync } from 'fs';
 import { FilesService } from './files.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UPLOAD_PATH } from '@app/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Public } from '@app/common/helpers';
 
 const storage = diskStorage({
   destination: (_: any, __: any, cb: any) => {
@@ -30,12 +29,12 @@ const storage = diskStorage({
     }
   },
   filename: (_: any, file: any, cb: any) => {
-    let name = file.originalname;
+    const name = file.originalname;
     cb(null, name);
   },
 });
 
-@ApiTags("Files")
+@ApiTags('Files')
 @Controller('files')
 export class FilesController {
   constructor(private filesService: FilesService) {}
@@ -43,6 +42,7 @@ export class FilesController {
   @Post()
   @UseInterceptors(FileInterceptor('file', { storage }))
   async uploadFile(@UploadedFile() file) {
+    console.log(file);
 
     // return this.filesService.create({
     //   name: file.originalname,
@@ -55,6 +55,7 @@ export class FilesController {
   @Put()
   @UseInterceptors(FilesInterceptor('files', 10, { storage }))
   async uploadFiles(@UploadedFiles() files) {
+    console.log(files);
 
     // let gfiles = await Promise.all(this.uploadFilesToGCloud(files));
 
@@ -74,12 +75,11 @@ export class FilesController {
     //   data: _files
     // }
 
-    return {}
+    return {};
   }
-
-  @UseGuards(JwtAuthGuard)
+  @Public()
   @Get()
   getFiles() {
-    return this.filesService.find();
+    return this.filesService.findAll();
   }
 }

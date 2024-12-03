@@ -1,0 +1,18 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.addMissingImports.ts": "always",
+    "source.organizeImports.ts": "always"
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "workbench.editor.customLabels.patterns": {
+    "**/src/**/*.controller.ts": "${filename} - Controller",
+    "**/src/**/*.service.ts": "${filename} - Service",
+    "**/src/**/*.module.ts": "${filename} - Module",
+    "**/src/**/*.hbs": "${filename} - Template"
+  }
+}

@@ -10,9 +10,9 @@ services:
       - MAILDEV_OUTGOING_PORT=587
       - MAILDEV_OUTGOING_USER=apikey
       - MAILDEV_OUTGOING_PASS=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
-      - MAILDEV_WEB_USER=danny
+      - MAILDEV_WEB_USER=mbidaniel01@gmail.com
       - MAILDEV_WEB_PASS=pass1234
-      - MAILDEV_INCOMING_USER=danny
+      - MAILDEV_INCOMING_USER=mbidaniel01@gmail.com
       - MAILDEV_INCOMING_PASS=pass1234
     ports:
       - "1080:1080"

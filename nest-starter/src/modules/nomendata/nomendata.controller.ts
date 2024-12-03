@@ -29,8 +29,8 @@ export class NomendataController {
     @Body() createNomendatumDto: CreateNomenclatureDataDto,
     @Param('code') code: string,
   ) {
-    let nomen = await this.nomenclatureService.getNomenByCode(code);    
-    let accessKey = createNomendatumDto.data[accessKeyName];    
+    const nomen = await this.nomenclatureService.getNomenByCode(code);
+    const accessKey = createNomendatumDto.data[accessKeyName];
     delete createNomendatumDto.data[accessKeyName];
     return this.nomendataService.create({
       nomen: nomen.data._id,
@@ -41,7 +41,7 @@ export class NomendataController {
 
   @Get()
   async findAll(@Param('code') code: string) {
-    let nomen = await this.nomenclatureService.getNomenByCode(code);    
+    const nomen = await this.nomenclatureService.getNomenByCode(code);
     return this.nomendataService.find({ nomen: nomen.data._id }, {}, true);
   }
 
@@ -58,5 +58,3 @@ export class NomendataController {
     return this.nomendataService.delete({ _id: id });
   }
 }
-
-

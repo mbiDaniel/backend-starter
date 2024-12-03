@@ -18,6 +18,6 @@ export class NomenclatureService extends EntityRepository<NomenclatureDocument> 
   }
 
   async getNomenByCode(code: string) {
-    return returnSuccess(this.nomenclatureModel.findOne({ code }))
+    return returnSuccess(this.nomenclatureModel.findOne({ code }));
   }
 }

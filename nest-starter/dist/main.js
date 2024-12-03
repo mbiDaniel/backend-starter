@@ -655,6 +655,7 @@ exports.hashString = hashString;
 exports.compareHash = compareHash;
 const config_1 = __webpack_require__(/*! @app/config */ "./libs/config/src/index.ts");
 const crypto_1 = __webpack_require__(/*! crypto */ "crypto");
+const bcrypt = __webpack_require__(/*! bcrypt */ "bcrypt");
 function encryptText(text) {
     let cipher = (0, crypto_1.createCipheriv)('aes-256-cbc', config_1.ENCRYPTION_KEY, config_1.ENCRYPTION_IV);
     let encrypted = cipher.update(text);
@@ -669,10 +670,12 @@ function decryptText(text) {
     return decrypted.toString();
 }
 async function hashString(text) {
-    return "hash";
+    const hash = await bcrypt.hash(text, config_1.SALT_ROUNDS);
+    return hash;
 }
 async function compareHash(text, hash) {
-    return "";
+    const isMatch = await bcrypt.compare(text, hash);
+    return isMatch;
 }
 
 
@@ -686,11 +689,16 @@ async function compareHash(text, hash) {
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SALT_ROUNDS = exports.ENCRYPTION_IV = exports.ENCRYPTION_KEY = exports.MONGODB_URL = exports.JWT_SECRET = exports.MAILDEV_INCOMING_PASS = exports.MAILDEV_INCOMING_USER = void 0;
+exports.SALT_ROUNDS = exports.ENCRYPTION_IV = exports.ENCRYPTION_KEY = exports.MONGODB_URL = exports.MAIL_FROM_USER = exports.SMTP_PASS = exports.SMTP_USER = exports.SMTP_PORT = exports.SMTP_HOST = exports.JWT_SECRET = exports.MAILDEV_INCOMING_PASS = exports.MAILDEV_INCOMING_USER = void 0;
 const crypto_1 = __webpack_require__(/*! crypto */ "crypto");
 exports.MAILDEV_INCOMING_USER = "danny";
 exports.MAILDEV_INCOMING_PASS = "pass1234";
 exports.JWT_SECRET = 'IIededeasasASSK';
+exports.SMTP_HOST = "smtp.sendgrid.net";
+exports.SMTP_PORT = 465;
+exports.SMTP_USER = "apikey";
+exports.SMTP_PASS = "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";
+exports.MAIL_FROM_USER = "mbidaniel01@gmail.com";
 exports.MONGODB_URL = 'mongodb://localhost:27017/backend-starter';
 exports.ENCRYPTION_KEY = (0, crypto_1.createHash)('sha512')
     .update('LATi88ShjT7_', 'utf-8')
@@ -720,11 +728,14 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
+const path = __webpack_require__(/*! path */ "path");
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const mailer_1 = __webpack_require__(/*! @nestjs-modules/mailer */ "@nestjs-modules/mailer");
+const handlebars_adapter_1 = __webpack_require__(/*! @nestjs-modules/mailer/dist/adapters/handlebars.adapter */ "@nestjs-modules/mailer/dist/adapters/handlebars.adapter");
 const files_module_1 = __webpack_require__(/*! ./modules/files/files.module */ "./src/modules/files/files.module.ts");
 const users_module_1 = __webpack_require__(/*! ./modules/users/users.module */ "./src/modules/users/users.module.ts");
 const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
-const config_1 = __webpack_require__(/*! @app/config */ "./libs/config/src/index.ts");
+const config = __webpack_require__(/*! @app/config */ "./libs/config/src/index.ts");
 const auth_module_1 = __webpack_require__(/*! ./modules/auth/auth.module */ "./src/modules/auth/auth.module.ts");
 const profile_module_1 = __webpack_require__(/*! ./modules/profile/profile.module */ "./src/modules/profile/profile.module.ts");
 const nomenclature_module_1 = __webpack_require__(/*! ./modules/nomenclature/nomenclature.module */ "./src/modules/nomenclature/nomenclature.module.ts");
@@ -735,7 +746,38 @@ exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forRoot(config_1.MONGODB_URL),
+            mailer_1.MailerModule.forRoot({
+                transport: {
+                    host: config.SMTP_HOST,
+                    port: config.SMTP_PORT,
+                    auth: {
+                        user: config.SMTP_USER,
+                        pass: config.SMTP_PASS,
+                    },
+                },
+                defaults: {
+                    from: config.MAIL_FROM_USER,
+                },
+                template: {
+                    dir: path.join(process.env.PWD, 'src', 'templates'),
+                    adapter: new handlebars_adapter_1.HandlebarsAdapter(undefined, {
+                        inlineCssEnabled: true,
+                        inlineCssOptions: {},
+                    }),
+                    options: {
+                        strict: true,
+                    },
+                },
+                options: {
+                    partials: {
+                        dir: path.join(process.env.PWD, 'src', 'templates', 'partials'),
+                        options: {
+                            strict: true,
+                        },
+                    },
+                },
+            }),
+            mongoose_1.MongooseModule.forRoot(config.MONGODB_URL),
             auth_module_1.AuthModule,
             files_module_1.FilesModule,
             users_module_1.UsersModule,
@@ -919,21 +961,24 @@ let AuthService = class AuthService extends common_1.EntityRepository {
     }
     async loginUser(user) {
         try {
-            let authUser = await this.userModel.verifyUser(user.email, user.pwd);
-            let actions = authUser.profile?.actions?.map((action) => action.data.key) || [];
+            const authUser = await this.userModel.verifyUser(user.email, user.pwd);
+            const actions = authUser.profile?.actions?.map((action) => action.data.key) || [];
             const payload = { userID: authUser._id };
             return {
                 message: 'Login successful',
                 status: 'success',
                 data: {
-                    access_token: this.jwtService.sign(payload, { secret: config_1.JWT_SECRET, expiresIn: '1h' }),
+                    access_token: this.jwtService.sign(payload, {
+                        secret: config_1.JWT_SECRET,
+                        expiresIn: '1h',
+                    }),
                     user: {
                         fname: authUser.fname,
                         lname: authUser.lname,
                         email: authUser.email,
-                        permissions: actions
+                        permissions: actions,
                     },
-                }
+                },
             };
         }
         catch (error) {
@@ -1040,8 +1085,8 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         const user = await this.userModel.findUserProfile({ _id: payload.userID }, { pwd: 0 });
         if (user.length === 0)
             return null;
-        let _user = user[0];
-        let actions = _user.profile?.actions?.map((action) => action.data.key) || [];
+        const _user = user[0];
+        const actions = _user.profile?.actions?.map((action) => action.data.key) || [];
         return { ..._user, actions };
     }
 };
@@ -1152,9 +1197,9 @@ const multer_1 = __webpack_require__(/*! multer */ "multer");
 const path_1 = __webpack_require__(/*! path */ "path");
 const fs_1 = __webpack_require__(/*! fs */ "fs");
 const files_service_1 = __webpack_require__(/*! ./files.service */ "./src/modules/files/files.service.ts");
-const jwt_auth_guard_1 = __webpack_require__(/*! ../auth/jwt-auth.guard */ "./src/modules/auth/jwt-auth.guard.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "./libs/common/src/index.ts");
 const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
+const helpers_1 = __webpack_require__(/*! @app/common/helpers */ "./libs/common/src/helpers/index.ts");
 const storage = (0, multer_1.diskStorage)({
     destination: (_, __, cb) => {
         try {
@@ -1169,7 +1214,7 @@ const storage = (0, multer_1.diskStorage)({
         }
     },
     filename: (_, file, cb) => {
-        let name = file.originalname;
+        const name = file.originalname;
         cb(null, name);
     },
 });
@@ -1178,12 +1223,14 @@ let FilesController = class FilesController {
         this.filesService = filesService;
     }
     async uploadFile(file) {
+        console.log(file);
     }
     async uploadFiles(files) {
+        console.log(files);
         return {};
     }
     getFiles() {
-        return this.filesService.find();
+        return this.filesService.findAll();
     }
 };
 exports.FilesController = FilesController;
@@ -1204,14 +1251,14 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], FilesController.prototype, "uploadFiles", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, helpers_1.Public)(),
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], FilesController.prototype, "getFiles", null);
 exports.FilesController = FilesController = __decorate([
-    (0, swagger_1.ApiTags)("Files"),
+    (0, swagger_1.ApiTags)('Files'),
     (0, common_1.Controller)('files'),
     __metadata("design:paramtypes", [typeof (_a = typeof files_service_1.FilesService !== "undefined" && files_service_1.FilesService) === "function" ? _a : Object])
 ], FilesController);
@@ -1244,9 +1291,11 @@ let FilesModule = class FilesModule {
 exports.FilesModule = FilesModule;
 exports.FilesModule = FilesModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: common_2.File.name, schema: common_2.FileSchema }])],
+        imports: [
+            mongoose_1.MongooseModule.forFeature([{ name: common_2.File.name, schema: common_2.FileSchema }]),
+        ],
         controllers: [files_controller_1.FilesController],
-        providers: [files_service_1.FilesService]
+        providers: [files_service_1.FilesService],
     })
 ], FilesModule);
 
@@ -1272,19 +1321,43 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FilesService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const mongoose_1 = __webpack_require__(/*! @nestjs/mongoose */ "@nestjs/mongoose");
 const common_2 = __webpack_require__(/*! @app/common */ "./libs/common/src/index.ts");
 const mongoose_2 = __webpack_require__(/*! mongoose */ "mongoose");
+const mailer_1 = __webpack_require__(/*! @nestjs-modules/mailer */ "@nestjs-modules/mailer");
 let FilesService = class FilesService extends common_2.EntityRepository {
-    constructor(fileModel) {
+    constructor(fileModel, mailerService) {
         super(fileModel);
         this.fileModel = fileModel;
+        this.mailerService = mailerService;
     }
     async findAll() {
+        const context = {
+            saasName: 'YourSaaS',
+            primaryColor: '#4CAF50',
+            userName: 'John Doe',
+            saasBenefit: 'streamline your workflow',
+            gettingStartedSteps: [
+                'Complete your profile',
+                'Explore our dashboard',
+                'Check out our quick start guide',
+            ],
+            supportMessage: 'If you have any questions, our support team is always here to help.',
+            ctaLink: 'https://yoursaas.com/get-started',
+            ctaText: 'Get Started Now',
+            currentYear: new Date().getFullYear(),
+            footerMessage: "You're receiving this email because you signed up for YourSaaS. If you believe this is an error, please contact our support team.",
+        };
+        this.mailerService.sendMail({
+            to: 'blackdev60@gmail.com',
+            subject: 'Testing Nest Mailermodule with template ✔',
+            template: 'welcome',
+            context,
+        });
         return [];
     }
 };
@@ -1292,7 +1365,7 @@ exports.FilesService = FilesService;
 exports.FilesService = FilesService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(common_2.File.name)),
-    __metadata("design:paramtypes", [typeof (_a = typeof mongoose_2.Model !== "undefined" && mongoose_2.Model) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof mongoose_2.Model !== "undefined" && mongoose_2.Model) === "function" ? _a : Object, typeof (_b = typeof mailer_1.MailerService !== "undefined" && mailer_1.MailerService) === "function" ? _b : Object])
 ], FilesService);
 
 
@@ -1414,10 +1487,14 @@ let NomenclatureModule = class NomenclatureModule {
 exports.NomenclatureModule = NomenclatureModule;
 exports.NomenclatureModule = NomenclatureModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: common_2.Nomenclature.name, schema: common_2.NomenclatureSchema }])],
+        imports: [
+            mongoose_1.MongooseModule.forFeature([
+                { name: common_2.Nomenclature.name, schema: common_2.NomenclatureSchema },
+            ]),
+        ],
         controllers: [nomenclature_controller_1.NomenclatureController],
         providers: [nomenclature_service_1.NomenclatureService],
-        exports: [nomenclature_service_1.NomenclatureService]
+        exports: [nomenclature_service_1.NomenclatureService],
     })
 ], NomenclatureModule);
 
@@ -1503,8 +1580,8 @@ let NomendataController = class NomendataController {
         this.nomenclatureService = nomenclatureService;
     }
     async create(createNomendatumDto, code) {
-        let nomen = await this.nomenclatureService.getNomenByCode(code);
-        let accessKey = createNomendatumDto.data[common_2.accessKeyName];
+        const nomen = await this.nomenclatureService.getNomenByCode(code);
+        const accessKey = createNomendatumDto.data[common_2.accessKeyName];
         delete createNomendatumDto.data[common_2.accessKeyName];
         return this.nomendataService.create({
             nomen: nomen.data._id,
@@ -1513,7 +1590,7 @@ let NomendataController = class NomendataController {
         });
     }
     async findAll(code) {
-        let nomen = await this.nomenclatureService.getNomenByCode(code);
+        const nomen = await this.nomenclatureService.getNomenByCode(code);
         return this.nomendataService.find({ nomen: nomen.data._id }, {}, true);
     }
     async update(id, updateNomendatumDto) {
@@ -1593,7 +1670,7 @@ exports.NomendataModule = NomendataModule = __decorate([
             mongoose_1.MongooseModule.forFeature([
                 { name: nomenclaturedata_schema_1.NomenclatureData.name, schema: nomenclaturedata_schema_1.NomenclatureDataSchema },
             ]),
-            nomenclature_module_1.NomenclatureModule
+            nomenclature_module_1.NomenclatureModule,
         ],
         controllers: [nomendata_controller_1.NomendataController],
         providers: [nomendata_service_1.NomendataService],
@@ -1706,7 +1783,6 @@ const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const profile_service_1 = __webpack_require__(/*! ./profile.service */ "./src/modules/profile/profile.service.ts");
 const create_profile_dto_1 = __webpack_require__(/*! ./dto/create-profile.dto */ "./src/modules/profile/dto/create-profile.dto.ts");
 const update_profile_dto_1 = __webpack_require__(/*! ./dto/update-profile.dto */ "./src/modules/profile/dto/update-profile.dto.ts");
-const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const roles_decorator_1 = __webpack_require__(/*! ../auth/roles.decorator */ "./src/modules/auth/roles.decorator.ts");
 let ProfileController = class ProfileController {
     constructor(profileService) {
@@ -1770,7 +1846,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ProfileController.prototype, "remove", null);
 exports.ProfileController = ProfileController = __decorate([
-    (0, swagger_1.ApiTags)("Profiles"),
     (0, common_1.Controller)('profiles'),
     __metadata("design:paramtypes", [typeof (_a = typeof profile_service_1.ProfileService !== "undefined" && profile_service_1.ProfileService) === "function" ? _a : Object])
 ], ProfileController);
@@ -1804,9 +1879,7 @@ exports.ProfileModule = ProfileModule;
 exports.ProfileModule = ProfileModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            mongoose_1.MongooseModule.forFeature([
-                { name: common_2.Profile.name, schema: common_2.ProfileSchema },
-            ]),
+            mongoose_1.MongooseModule.forFeature([{ name: common_2.Profile.name, schema: common_2.ProfileSchema }]),
         ],
         controllers: [profile_controller_1.ProfileController],
         providers: [profile_service_1.ProfileService],
@@ -1954,11 +2027,11 @@ var _a, _b, _c, _d;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.UsersController = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 const users_service_1 = __webpack_require__(/*! ./users.service */ "./src/modules/users/users.service.ts");
 const create_user_dto_1 = __webpack_require__(/*! ./dto/create-user.dto */ "./src/modules/users/dto/create-user.dto.ts");
 const update_user_dto_1 = __webpack_require__(/*! ./dto/update-user.dto */ "./src/modules/users/dto/update-user.dto.ts");
 const common_2 = __webpack_require__(/*! @app/common */ "./libs/common/src/index.ts");
-const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 let UsersController = class UsersController {
     constructor(usersService) {
         this.usersService = usersService;
@@ -2107,6 +2180,26 @@ exports.UsersService = UsersService = __decorate([
 
 /***/ }),
 
+/***/ "@nestjs-modules/mailer":
+/*!*****************************************!*\
+  !*** external "@nestjs-modules/mailer" ***!
+  \*****************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs-modules/mailer");
+
+/***/ }),
+
+/***/ "@nestjs-modules/mailer/dist/adapters/handlebars.adapter":
+/*!**************************************************************************!*\
+  !*** external "@nestjs-modules/mailer/dist/adapters/handlebars.adapter" ***!
+  \**************************************************************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs-modules/mailer/dist/adapters/handlebars.adapter");
+
+/***/ }),
+
 /***/ "@nestjs/common":
 /*!*********************************!*\
   !*** external "@nestjs/common" ***!
@@ -2184,6 +2277,16 @@ module.exports = require("@nestjs/platform-express");
 /***/ ((module) => {
 
 module.exports = require("@nestjs/swagger");
+
+/***/ }),
+
+/***/ "bcrypt":
+/*!*************************!*\
+  !*** external "bcrypt" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("bcrypt");
 
 /***/ }),
 
@@ -2285,7 +2388,7 @@ module.exports = require("path");
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it uses a non-standard name for the exports (exports).
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
 /*!*********************!*\
@@ -2296,21 +2399,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
 const app_module_1 = __webpack_require__(/*! ./app.module */ "./src/app.module.ts");
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const swagger_1 = __webpack_require__(/*! @nestjs/swagger */ "@nestjs/swagger");
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule, { logger: ["verbose"] });
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, { logger: ['verbose'] });
     app.useGlobalPipes(new common_1.ValidationPipe());
-    const config = new swagger_1.DocumentBuilder()
-        .setTitle('Backend Starter')
-        .setDescription('This is a starter templete for a backend API')
-        .setVersion('1.0')
-        .addServer('http://localhost:8000/', "Local Environment")
-        .addServer('http://localhost:8000/', "Network Environment")
-        .addBearerAuth({ type: "http" }, "Auth")
-        .addTag('Backend')
-        .build();
-    const document = swagger_1.SwaggerModule.createDocument(app, config);
-    swagger_1.SwaggerModule.setup('api', app, document);
     await app.listen(8000);
 }
 bootstrap();

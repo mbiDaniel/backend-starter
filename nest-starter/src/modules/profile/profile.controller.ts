@@ -1,11 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { ProfileService } from './profile.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/roles.decorator';
 
-@ApiTags("Profiles")
 @Controller('profiles')
 export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
@@ -25,13 +31,13 @@ export class ProfileController {
   @Roles('profile.read')
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.profileService.findOne({_id: id});
+    return this.profileService.findOne({ _id: id });
   }
 
   @Roles('profile.update')
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateProfileDto: UpdateProfileDto) {
-    return this.profileService.update({_id: id}, updateProfileDto);
+    return this.profileService.update({ _id: id }, updateProfileDto);
   }
 
   @Roles('profile.delete')

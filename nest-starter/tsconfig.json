@@ -29,7 +29,8 @@
       ],
       "@app/config/*": [
         "libs/config/src/*"
-      ]
+      ],
+      "@/*": ["./src/*"]
     }
   }
 }

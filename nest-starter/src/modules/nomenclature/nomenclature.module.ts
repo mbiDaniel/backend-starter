@@ -5,9 +5,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Nomenclature, NomenclatureSchema } from '@app/common';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Nomenclature.name, schema: NomenclatureSchema }])],
+  imports: [
+    MongooseModule.forFeature([
+      { name: Nomenclature.name, schema: NomenclatureSchema },
+    ]),
+  ],
   controllers: [NomenclatureController],
   providers: [NomenclatureService],
-  exports: [NomenclatureService]
+  exports: [NomenclatureService],
 })
 export class NomenclatureModule {}

@@ -1,4 +1,4 @@
-import {  Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { NomendataService } from './nomendata.service';
 import { NomendataController } from './nomendata.controller';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -13,10 +13,9 @@ import { NomenclatureModule } from '../nomenclature/nomenclature.module';
     MongooseModule.forFeature([
       { name: NomenclatureData.name, schema: NomenclatureDataSchema },
     ]),
-    NomenclatureModule
+    NomenclatureModule,
   ],
   controllers: [NomendataController],
   providers: [NomendataService],
 })
-export class NomendataModule {
-}
+export class NomendataModule {}

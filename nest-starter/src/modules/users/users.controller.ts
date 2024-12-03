@@ -1,13 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from '@app/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { UsersService } from "./users.service";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { User } from "@app/common";
 
 @ApiBearerAuth("Auth")
-@ApiTags('Users')
-@Controller('users')
+@ApiTags("Users")
+@Controller("users")
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -21,19 +30,18 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {    
-    return this.usersService.findOne({_id: id});
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.usersService.findOne({ _id: id });
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    
-    return this.usersService.update({_id: id}, updateUserDto);
+  @Patch(":id")
+  update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update({ _id: id }, updateUserDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.delete({_id: id});
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.usersService.delete({ _id: id });
   }
 }

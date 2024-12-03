@@ -10,7 +10,7 @@ import { UserModelInterface } from './interface';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    @InjectModel(User.name) private userModel: Model<User> & UserModelInterface,
+    @InjectModel(User.name) private userModel: Model<User> & UserModelInterface
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -19,11 +19,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: {userID: string, iat: number, exp: number}) {
-    const user = await this.userModel.findUserProfile({_id: payload.userID}, {pwd: 0})
-    if (user.length === 0) return null   
-    let _user = user[0];
-    let actions = _user.profile?.actions?.map((action) => action.data.key) || []; 
-    return {..._user, actions};
+  async validate(payload: { userID: string; iat: number; exp: number }) {
+    const user = await this.userModel.findUserProfile(
+      { _id: payload.userID },
+      { pwd: 0 }
+    );
+    if (user.length === 0) return null;
+    const _user = user[0];
+    const actions =
+      _user.profile?.actions?.map((action) => action.data.key) || [];
+    return { ..._user, actions };
   }
 }

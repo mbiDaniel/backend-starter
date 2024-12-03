@@ -8,7 +8,7 @@ import { returnSuccess } from '@app/common/helpers';
 export class ProfileService extends EntityRepository<ProfileDocument> {
   constructor(
     @InjectModel(Profile.name)
-    private profileModel: Model<ProfileDocument> & {findActions: any},
+    private profileModel: Model<ProfileDocument> & { findActions: any },
   ) {
     super(profileModel);
   }
